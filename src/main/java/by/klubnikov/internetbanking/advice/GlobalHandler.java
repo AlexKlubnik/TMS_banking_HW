@@ -1,5 +1,6 @@
 package by.klubnikov.internetbanking.advice;
 
+import by.klubnikov.internetbanking.error.BankingError;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,9 +12,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalHandler {
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handlerException(Exception e) {
+    public ResponseEntity<BankingError> handlerException(Exception e) {
         log.error(e.getMessage(), e);
-       return new ResponseEntity<>(e.getMessage(), HttpStatus.I_AM_A_TEAPOT);
+       return new ResponseEntity<>(new BankingError(e.getMessage(), HttpStatus.NOT_FOUND.value()), HttpStatus.NOT_FOUND);
     }
 
 }

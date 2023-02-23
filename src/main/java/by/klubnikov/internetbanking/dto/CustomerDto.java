@@ -1,4 +1,4 @@
-package by.klubnikov.internetbanking.DTO;
+package by.klubnikov.internetbanking.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,13 +7,13 @@ import java.util.List;
 
 @Data
 @AllArgsConstructor
-public class CustomerDTO {
+public class CustomerDto {
 
-    private Long customerId;
+    private Long id;
 
     private String name;
 
     private String personalNumber;
 
-    private List<CardDTO> cards;
+    private List<CardDto> cards;
 }

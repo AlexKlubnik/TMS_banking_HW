@@ -1,9 +1,10 @@
 package by.klubnikov.internetbanking.service;
 
-import by.klubnikov.internetbanking.DTO.CustomerDTO;
-import by.klubnikov.internetbanking.DTO.CustomerDtoMapper;
+import by.klubnikov.internetbanking.dto.CustomerDto;
+import by.klubnikov.internetbanking.dto.CustomerDtoMapper;
 import by.klubnikov.internetbanking.entity.Card;
 import by.klubnikov.internetbanking.entity.Customer;
+import by.klubnikov.internetbanking.error.SomethingWentWrongException;
 import by.klubnikov.internetbanking.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -23,20 +23,20 @@ public class CustomerService {
     private final CustomerRepository repository;
     private final CardService cardService;
 
-    public List<CustomerDTO> findAll() {
+    public List<CustomerDto> findAll() {
         return repository.findAll()
                 .stream()
                 .map(CustomerDtoMapper.INSTANCE::toCustomerDTO)
                 .collect(Collectors.toList());
     }
 
-    public CustomerDTO findById(Long id) {
+    public CustomerDto findById(Long id) {
         return repository.findById(id)
                 .map(customer -> CustomerDtoMapper.INSTANCE.toCustomerDTO(customer))
-                .orElseThrow(() -> new NoSuchElementException("No customer found by this ID"));
+                .orElseThrow(() -> new SomethingWentWrongException("No customer found by ID" + id));
     }
 
-    public CustomerDTO save(Customer customer) {
+    public CustomerDto save(Customer customer) {
         repository.save(customer);
         return CustomerDtoMapper.INSTANCE.toCustomerDTO(customer);
     }
@@ -45,26 +45,34 @@ public class CustomerService {
         repository.deleteById(id);
     }
 
-    public CustomerDTO saveCard(Long customerId, Card card) {
+    public CustomerDto saveCard(Long customerId, double balance) {
         Customer customer = repository
-                .findById(customerId).orElseThrow(() -> new NoSuchElementException("No customer found by this ID"));
+                .findById(customerId).orElseThrow(() ->
+                        new SomethingWentWrongException("No customer found by ID" + customerId));
+
+        Card card = cardService.createCard(balance);
         customer.addCard(card);
         repository.save(customer);
         return CustomerDtoMapper.INSTANCE.toCustomerDTO(customer);
     }
 
-    public CustomerDTO deleteCard(Long customerId, int customerCardIndex) {
+    public CustomerDto deleteCard(Long customerId, Long cardId) {
         Customer customer = repository
                 .findById(customerId)
                 .orElseThrow();
-        Card removableCard = customer.getCards().get(customerCardIndex);
+        Card removableCard = customer
+                .getCards()
+                .stream()
+                .filter(card -> Objects.equals(card.getId(), cardId))
+                .findFirst()
+                .orElseThrow(() -> new SomethingWentWrongException("No customer's cards found by ID" + cardId));
         customer.getCards().remove(removableCard);
         repository.save(customer);
         return CustomerDtoMapper.INSTANCE.toCustomerDTO(customer);
     }
 
 
-    public CustomerDTO payFromCard(Long customerId, Long cardId, double sum) {
+    public CustomerDto createPayment(Long customerId, Long cardId, double sum) {
         Customer customer = repository
                 .findById(customerId)
                 .orElseThrow();
@@ -75,23 +83,24 @@ public class CustomerService {
 
     private void subtractFromCustomerCard(Customer customer, Long cardId, double sum) {
         double balance = cardService.findById(cardId).getBalance();
-        customer
-                .getCards()
-                .stream()
-                .filter(card1 -> Objects.equals(card1.getId(), cardId))
-                .findAny()
-                .orElseThrow()
-                .setBalance(balance - sum);
+        if (balance >= sum) {
+            customer
+                    .getCards()
+                    .stream()
+                    .filter(card1 -> Objects.equals(card1.getId(), cardId))
+                    .findAny()
+                    .orElseThrow(() -> new SomethingWentWrongException("No customer's cards found by ID" + cardId))
+                    .setBalance(balance - sum);
+        } else throw new SomethingWentWrongException("You don't have enough money to make payment");
     }
 
     @Transactional
-    public CustomerDTO transferFromCardToCard(Long customerId, Long customerCardId, Long cardId, double sum) {
+    public CustomerDto sendFromCardToCard(Long customerId, Long customerCardId, Long cardId, double sum) {
         Customer customer = repository
                 .findById(customerId)
                 .orElseThrow();
         subtractFromCustomerCard(customer, customerCardId, sum);
         cardService.addToCard(cardId, sum);
-        repository.save(customer);
         return CustomerDtoMapper.INSTANCE.toCustomerDTO(customer);
     }
 

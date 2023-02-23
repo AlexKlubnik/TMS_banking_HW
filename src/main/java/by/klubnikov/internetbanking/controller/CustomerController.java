@@ -1,7 +1,6 @@
 package by.klubnikov.internetbanking.controller;
 
-import by.klubnikov.internetbanking.DTO.CustomerDTO;
-import by.klubnikov.internetbanking.entity.Card;
+import by.klubnikov.internetbanking.dto.CustomerDto;
 import by.klubnikov.internetbanking.entity.Customer;
 import by.klubnikov.internetbanking.service.CustomerService;
 import lombok.RequiredArgsConstructor;
@@ -17,43 +16,41 @@ import java.util.List;
 public class CustomerController {
 
     private final CustomerService customerService;
-//    private final CardService cardService;
+
 
     @GetMapping
-    public List<CustomerDTO> findAll() {
+    public List<CustomerDto> findAll() {
         return customerService.findAll();
     }
 
     @GetMapping("{id}")
-    public CustomerDTO findById(@PathVariable Long id) {
-//        log.info("Customer entity is {}", customerService.findById(id));
+    public CustomerDto findById(@PathVariable Long id) {
         return customerService.findById(id);
     }
 
     @PostMapping("{customerId}/cards")
-    public CustomerDTO saveCard(@PathVariable Long customerId, Card card) {
-//        log.info("customer card is {}", card);
-        return customerService.saveCard(customerId, card);
+    public CustomerDto saveCard(@PathVariable Long customerId, double balance) {
+        return customerService.saveCard(customerId, balance);
     }
 
     @PatchMapping("{customerId}/cards/{cardId}")
-    public CustomerDTO payFromCard(@PathVariable Long customerId, @PathVariable Long cardId, @RequestParam double sum) {
-        return customerService.payFromCard(customerId, cardId, sum);
+    public CustomerDto createPayment(@PathVariable Long customerId, @PathVariable Long cardId, @RequestParam double sum) {
+        return customerService.createPayment(customerId, cardId, sum);
     }
 
-    @PatchMapping("{customerId}/cards/{customerCardId}/{anotherCardId}")
-    public CustomerDTO transferFromCardToCard(@PathVariable Long customerId, @PathVariable Long customerCardId,
-                                              @PathVariable Long anotherCardId, @RequestParam double sum) {
-        return customerService.transferFromCardToCard(customerId, customerCardId, anotherCardId, sum);
+    @PostMapping("{customerId}/cards/{customerCardId}")
+    public CustomerDto sendFromCardToCard(@PathVariable Long customerId, @PathVariable Long customerCardId,
+                                          Long anotherCardId, double sum) {
+        return customerService.sendFromCardToCard(customerId, customerCardId, anotherCardId, sum);
     }
 
     @DeleteMapping("{customerId}/cards/{customerCardIndex}")
-    public CustomerDTO deleteCard(@PathVariable Long customerId, @PathVariable int customerCardIndex) {
+    public CustomerDto deleteCard(@PathVariable Long customerId, @PathVariable Long customerCardIndex) {
         return customerService.deleteCard(customerId, customerCardIndex);
     }
 
     @PostMapping
-    public CustomerDTO save(Customer customer) {
+    public CustomerDto save(Customer customer) {
         return customerService.save(customer);
     }
 

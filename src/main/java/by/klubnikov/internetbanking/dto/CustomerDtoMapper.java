@@ -1,4 +1,4 @@
-package by.klubnikov.internetbanking.DTO;
+package by.klubnikov.internetbanking.dto;
 
 import by.klubnikov.internetbanking.entity.Card;
 import by.klubnikov.internetbanking.entity.Customer;
@@ -10,11 +10,11 @@ public interface CustomerDtoMapper {
 
     CustomerDtoMapper INSTANCE = Mappers.getMapper(CustomerDtoMapper.class);
 
-    CustomerDTO toCustomerDTO(Customer customer);
+    CustomerDto toCustomerDTO(Customer customer);
 
 
-    default CardDTO toCardDTO(Card card) {
+    default CardDto toCardDTO(Card card) {
         String hidedNum = card.getCardNumber().replaceFirst("[0-9]{12}", "************");
-        return new CardDTO(hidedNum, card.getBalance());
+        return new CardDto(hidedNum, card.getBalance());
     }
 }

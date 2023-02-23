@@ -1,11 +1,11 @@
-package by.klubnikov.internetbanking.DTO;
+package by.klubnikov.internetbanking.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class CardDTO {
+public class CardDto {
 
     private String cardNumber;
 
